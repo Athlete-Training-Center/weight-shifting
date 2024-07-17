@@ -12,7 +12,7 @@ clear
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % bodyweight setting
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-[body_weight_kg, option] = dualInputGUI_WS;
+[body_weight_kg, option] = MultiInputGUI("WS");
 
 gravity = 9.80665; % gravity acceleration (m/s^2)
 bodyweight_N = body_weight_kg * gravity;
@@ -46,11 +46,13 @@ set(gca,'XTICK',[],'YTick',[])
 % original coordinate : left end(x = 0) and center
 xlim=[0 1200];
 ylim = [0 round(bodyweight_N,0)]; % TODO : 데이터 최대값이 대충 얼마인지 파악해서 최대값 지정해야 함
+% set limits for axes
 set(gca, 'xlim', xlim, 'ylim', ylim)
 
 % center coordinate for figure size
 centerpoint = [(xlim(1) + xlim(2)) / 2, (ylim(1) + ylim(2)) / 2];
 
+% bar blank between vertical center line and each bar
 margin = 300;
 
 switch option
@@ -60,13 +62,14 @@ switch option
         loc_x = [centerpoint(1)-margin, ylim(1)]; % x1 y
 end
 
-width = 100; % each bar width
+% each bar width
+width = 100; 
+% each bar height
 height = ylim(2) - ylim(1);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % draw outlines
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 %draw force plate line
 plot([0 0],get(gca,'ylim'),'k', 'linewidth',3)
 plot([xlim(2) xlim(2)],get(gca,'ylim'),'k', 'linewidth',3)
@@ -83,8 +86,15 @@ plot([loc_x(1)-width/2 loc_x(1)+width/2],[height height],'k', 'linewidth',1) % t
 plot([loc_x(1)-width/2 loc_x(1)-width/2],[ylim(1) height],'k', 'linewidth',1); % left
 plot([loc_x(1)+width/2 loc_x(1)+width/2],[ylim(1) height],'k', 'linewidth',1); % right
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% draw target line
+%% Perform a target force 10 times at a random rate based on weight
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 target_line = plot([loc_x(1) - width/2, loc_x(1) + width/2], [target_value target_value], 'LineWidth', 10, 'Color', 'black');
 text(centerpoint(1), target_value+20, "20% for body weight", 'FontSize', 20, 'HorizontalAlignment', 'center', 'Color', 'black');
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GRF data list for variability graph
