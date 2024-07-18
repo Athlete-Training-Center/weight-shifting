@@ -118,7 +118,7 @@ while true
             break
         end
 
-        if isempty(force{2,1}) || isempty(force{2,2})%error occurs when getting realtime grf data. Sometimes there is no data.
+        if isempty(force{2,1}) || isempty(force{2,2})
             continue
         end
         
