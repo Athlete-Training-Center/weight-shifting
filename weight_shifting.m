@@ -17,9 +17,6 @@ clear
 gravity = 9.80665; % gravity acceleration (m/s^2)
 bodyweight_N = body_weight_kg * gravity;
 
-% 120% for body weight
-target_value = bodyweight_N * 0.2;
-
 % Connect to QTM
 ip = '127.0.0.1';
 % Connects to QTM and keeps the connection alive.
@@ -45,7 +42,7 @@ set(gca,'XTICK',[],'YTick',[])
 %        ---------------------
 % original coordinate : left end(x = 0) and center
 xlim=[0 1200];
-ylim = [0 round(bodyweight_N,0)]; % TODO : 데이터 최대값이 대충 얼마인지 파악해서 최대값 지정해야 함
+ylim = [0 150 * gravity]; % 최대 150kg * gravity = 1471.0 N
 % set limits for axes
 set(gca, 'xlim', xlim, 'ylim', ylim)
 
@@ -68,6 +65,20 @@ width = 100;
 height = ylim(2) - ylim(1);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% draw target line
+%% Perform a target force 10 times at a random rate based on weight
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% 20 % for body weight
+target_value = bodyweight_N * 0.2;
+margin_of_error = bodyweight_N * 0.02; % 2%
+target_range = [target_value - margin_of_error, target_value + margin_of_error];
+
+target_line1 = plot([loc_x(1) - width/2, loc_x(1) + width/2], [target_range(1) target_range(1)], 'LineWidth', 3, 'Color', 'black');
+target_line2 = plot([loc_x(1) - width/2, loc_x(1) + width/2], [target_range(2) target_range(2)], 'LineWidth', 3, 'Color', 'black');
+text(loc_x(1) - width/2 - 100, target_value+20, sprintf("20%% for \nbody weight"), 'FontSize', 20, 'HorizontalAlignment', 'center', 'Color', 'black');
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % draw outlines
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %draw force plate line
@@ -88,18 +99,12 @@ plot([loc_x(1)+width/2 loc_x(1)+width/2],[ylim(1) height],'k', 'linewidth',1); %
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% draw target line
-%% Perform a target force 10 times at a random rate based on weight
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-target_line = plot([loc_x(1) - width/2, loc_x(1) + width/2], [target_value target_value], 'LineWidth', 10, 'Color', 'black');
-text(centerpoint(1), target_value+20, "20% for body weight", 'FontSize', 20, 'HorizontalAlignment', 'center', 'Color', 'black');
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GRF data list for variability graph
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 grf_list = [];
+
+% Initialize the text object for displaying the elapsed time
+time_text = text(xlim(2) - 150, ylim(2) - 100, 'Time: 0 s', 'FontSize', 20, 'Color', 'black');
 
 while true
     %use event function to avoid crash
@@ -129,7 +134,23 @@ while true
         % Update each bar
         set(plot_bar,'xdata', [loc_x(1), loc_x(1)],'ydata', [ylim(1), GRF_diff])
         
+        if GRF_diff >= target_range(1) && GRF_diff <= target_range(2)
+            time_in_target = toc(tStart);
+        else
+            tStart = tic;
+            time_in_target = 0;
+        end
+
+        % Update the time
+        set(time_text, 'String', sprintf('Time: %.1f s', time_in_target));
+
         drawnow;
+        
+        if toc(tStart) >= 30
+            % close the figure window
+            close(fig);
+            break;
+        end
 
     catch exception
         disp(exception.message);
